@@ -1,4 +1,3 @@
-/* script.js */
 document.getElementById('expenseForm').addEventListener('submit', function(event) {
     event.preventDefault();
     
@@ -7,19 +6,25 @@ document.getElementById('expenseForm').addEventListener('submit', function(event
     const amount = document.getElementById('amount').value;
     const type = document.getElementById('type').value;
     
-    const table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+    if (type === 'expense') {
+        addEntryToTable('expenseTable', date, description, amount);
+    } else if (type === 'emi') {
+        addEntryToTable('emiTable', date, description, amount);
+    }
+    
+    // Clear the form
+    document.getElementById('expenseForm').reset();
+});
+
+function addEntryToTable(tableId, date, description, amount) {
+    const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     
     const dateCell = newRow.insertCell(0);
     const descriptionCell = newRow.insertCell(1);
     const amountCell = newRow.insertCell(2);
-    const typeCell = newRow.insertCell(3);
     
     dateCell.innerText = date;
     descriptionCell.innerText = description;
     amountCell.innerText = amount;
-    typeCell.innerText = type;
-    
-    // Clear the form
-    document.getElementById('expenseForm').reset();
-});
+}
