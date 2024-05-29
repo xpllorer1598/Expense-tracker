@@ -1,30 +1,66 @@
-document.getElementById('expenseForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    const date = document.getElementById('date').value;
-    const description = document.getElementById('description').value;
-    const amount = document.getElementById('amount').value;
-    const type = document.getElementById('type').value;
-    
-    if (type === 'expense') {
-        addEntryToTable('expenseTable', date, description, amount);
-    } else if (type === 'emi') {
-        addEntryToTable('emiTable', date, description, amount);
-    }
-    
-    // Clear the form
-    document.getElementById('expenseForm').reset();
-});
+const API_KEY = 'dfa32568494ea2da634bee93';  // Replace with your actual API key
+const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/EUR`;
 
-function addEntryToTable(tableId, date, description, amount) {
+let exchangeRate = 0;
+
+// Function to fetch the exchange rate
+async function fetchExchangeRate() {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        exchangeRate = data.conversion_rates.INR;
+        console.log('Exchange rate fetched:', exchangeRate);  // Debugging: Log the exchange rate
+    } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+    }
+}
+
+// Function to add entry to table
+function addEntryToTable(tableId, date, description, amountInr, amountEur) {
     const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     
     const dateCell = newRow.insertCell(0);
     const descriptionCell = newRow.insertCell(1);
-    const amountCell = newRow.insertCell(2);
+    const amountInrCell = newRow.insertCell(2);
+    const amountEurCell = newRow.insertCell(3);
     
     dateCell.innerText = date;
     descriptionCell.innerText = description;
-    amountCell.innerText = amount;
+    amountInrCell.innerText = amountInr;
+    amountEurCell.innerText = amountEur;
 }
+
+// Event listener for form submission
+document.getElementById('expenseForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    await fetchExchangeRate();  // Ensure the exchange rate is updated before form submission
+    
+    const date = document.getElementById('date').value;
+    const description = document.getElementById('description').value;
+    let amountInr = parseFloat(document.getElementById('amountInr').value);
+    const amountEur = parseFloat(document.getElementById('amountEur').value);
+    const type = document.getElementById('type').value;
+    
+    console.log('Form data:', { date, description, amountInr, amountEur, type });  // Debugging: Log form data
+    
+    if (!isNaN(amountEur) && amountEur > 0) {
+        amountInr = amountEur * exchangeRate;
+    }
+    
+    console.log('Converted INR amount:', amountInr);  // Debugging: Log converted amount
+    
+    if (type === 'expense') {
+        addEntryToTable('expenseTable', date, description, amountInr.toFixed(2), amountEur ? amountEur.toFixed(2) : 'N/A');
+    } else if (type === 'emi') {
+        addEntryToTable('emiTable', date, description, amountInr.toFixed(2), amountEur ? amountEur.toFixed(2) : 'N/A');
+    }
+    
+    // Clear the form
+    document.getElementById('expenseForm').reset();
+    console.log('Form submitted and reset');  // Debugging: Confirm form submission and reset
+});
+
+// Fetch the exchange rate initially when the page loads
+fetchExchangeRate();
